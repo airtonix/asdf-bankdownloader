@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-# TODO: Ensure this is the correct GitHub homepage where releases can be downloaded for bankdownloader.
 GH_REPO="https://github.com/airtonix/bankdownloader"
 TOOL_NAME="bankdownloader"
 TOOL_TEST="bankdownloader --help"
@@ -27,12 +26,10 @@ sort_versions() {
 list_github_tags() {
 	git ls-remote --tags --refs "$GH_REPO" |
 		grep -o 'refs/tags/.*' | cut -d/ -f3- |
-		sed 's/^v//' # NOTE: You might want to adapt this sed to remove non-version strings from tags
+		sed 's/^v//'
 }
 
 list_all_versions() {
-	# TODO: Adapt this. By default we simply list the tag names from GitHub releases.
-	# Change this function if bankdownloader has other means of determining installable versions.
 	list_github_tags
 }
 
@@ -40,9 +37,11 @@ download_release() {
 	local version filename url
 	version="$1"
 	filename="$2"
+	processor=$(get_machine_processor)
+	os=$(get_machine_os)
 
 	# TODO: Adapt the release URL convention for bankdownloader
-	url="$GH_REPO/archive/v${version}.tar.gz"
+	url="$GH_REPO/releases/download/v${version}/${TOOL_NAME}-${version}_${os}_${processor}.tar.gz"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
@@ -71,4 +70,33 @@ install_version() {
 		rm -rf "$install_path"
 		fail "An error occurred while installing $TOOL_NAME $version."
 	)
+}
+
+get_machine_os() {
+	case "${OSTYPE}" in
+	darwin*)  echo "darwin" ;;
+	linux*)   echo "linux" ;;
+	bsd*)     echo "freebsd" ;;
+	*)
+		# dump error to stderr
+		echo "asdf-$TOOL_NAME: $OSTYPE is not supported" >&2
+		exit 1
+		;;
+	esac
+}
+
+get_machine_processor() {
+	ARCH=$(uname -m)
+	case "${ARCH}" in
+	x86_64*) echo 'amd64' ;;
+	armv6l) echo 'armv6' ;;
+	armv7l) echo 'armv7' ;;
+	arm*) echo 'arm64' ;;
+	i386*) echo '386' ;;
+	*)
+		# dump error to stderr
+		echo "asdf-$TOOL_NAME: $ARCH is not supported" >&2
+		exit 1
+		;;
+	esac
 }

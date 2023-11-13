@@ -4,8 +4,12 @@ Testing Locally:
 
 ```shell
 asdf plugin test <plugin-name> <plugin-url> [--asdf-tool-version <version>] [--asdf-plugin-gitref <git-ref>] [test-command*]
+```
 
-# TODO: adapt this
+for example:
+
+
+```shell
 asdf plugin test bankdownloader https://github.com/airtonix/asdf-bankdownloader.git "bankdownloader --help"
 ```
 
